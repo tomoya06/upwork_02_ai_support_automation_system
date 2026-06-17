@@ -1,0 +1,17 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "functions": {
+    "src/app/api/ai/pipeline/[id]/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/ai/reply/[id]/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/ai/classify/[id]/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
