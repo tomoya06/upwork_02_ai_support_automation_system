@@ -34,6 +34,7 @@ export async function runPipeline(ticket: Ticket, customer: Customer | null): Pr
 
   const runId = run?.id;
   const steps: PipelineStep[] = [];
+  let currentStep: PipelineStep["step"] = "execute";
 
   const addStep = async (step: PipelineStep) => {
     steps.push(step);
@@ -44,6 +45,7 @@ export async function runPipeline(ticket: Ticket, customer: Customer | null): Pr
 
   try {
     // 1. Embed
+    currentStep = "embed";
     const embedStart = Date.now();
     const embedding = await generateEmbedding(`${ticket.subject}\n${ticket.body}`);
     await addStep({
@@ -58,6 +60,7 @@ export async function runPipeline(ticket: Ticket, customer: Customer | null): Pr
     await storeTicketEmbedding(ticketId, workspaceId, embedding);
 
     // 2. Classify
+    currentStep = "classify";
     const classifyStart = Date.now();
     const classification = await classifyTicket(ticket.subject, ticket.body);
     await addStep({
@@ -88,6 +91,7 @@ export async function runPipeline(ticket: Ticket, customer: Customer | null): Pr
     });
 
     // 3. Retrieve
+    currentStep = "retrieve";
     const retrieveStart = Date.now();
     const [knowledgeSnippets, similarTickets] = await Promise.all([
       searchKnowledge(embedding, workspaceId, 0.5, 5),
@@ -115,6 +119,7 @@ export async function runPipeline(ticket: Ticket, customer: Customer | null): Pr
     }
 
     // 4. Decide
+    currentStep = "decide";
     const decideStart = Date.now();
     const decision = await makeDecision(
       ticket.subject,
@@ -158,6 +163,7 @@ export async function runPipeline(ticket: Ticket, customer: Customer | null): Pr
     }).eq("id", ticketId);
 
     // 5. Generate reply
+    currentStep = "generate";
     const generateStart = Date.now();
     const contextText = buildContextText(knowledgeSnippets, similarTickets);
     const reply = await generateReply(
@@ -184,6 +190,7 @@ export async function runPipeline(ticket: Ticket, customer: Customer | null): Pr
     });
 
     // 6. Execute if auto
+    currentStep = "execute";
     if (shouldAutoExecute(decision)) {
       await supabase.from("tickets").update({ status: "resolved" }).eq("id", ticketId);
       await supabase.from("ticket_messages").update({ metadata: { draft: false } }).eq("ticket_id", ticketId).eq("role", "ai");
@@ -218,7 +225,7 @@ export async function runPipeline(ticket: Ticket, customer: Customer | null): Pr
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     await addStep({
-      step: "execute",
+      step: currentStep,
       status: "failed",
       error: errorMessage,
     });
