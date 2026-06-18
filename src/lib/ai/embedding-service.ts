@@ -1,10 +1,11 @@
 import { HfInference } from "@huggingface/inference";
 import { config } from "@/lib/config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { fetchWithProxy } from "@/lib/fetch-with-proxy";
 
 let _hf: HfInference | null = null;
 function getHf(): HfInference {
-  if (!_hf) _hf = new HfInference(config.embeddings.huggingfaceApiKey);
+  if (!_hf) _hf = new HfInference(config.embeddings.huggingfaceApiKey, { fetch: fetchWithProxy });
   return _hf;
 }
 

@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import { config } from "@/lib/config";
+import { fetchWithProxy } from "@/lib/fetch-with-proxy";
 import {
   classificationPrompt,
   decisionPrompt,
@@ -14,7 +15,7 @@ import type {
 
 let _groq: Groq | null = null;
 function getGroq(): Groq {
-  if (!_groq) _groq = new Groq({ apiKey: config.ai.groqApiKey });
+  if (!_groq) _groq = new Groq({ apiKey: config.ai.groqApiKey, fetch: fetchWithProxy });
   return _groq;
 }
 
