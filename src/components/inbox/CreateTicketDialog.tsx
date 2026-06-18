@@ -65,7 +65,7 @@ export function CreateTicketDialog() {
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
             <label className="text-sm font-medium">Subject</label>
-            <Select value={subject} onValueChange={setSubject} required>
+            <Select value={subject} onValueChange={(value) => value && setSubject(value)} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select a subject" />
               </SelectTrigger>
