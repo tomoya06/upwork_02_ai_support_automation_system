@@ -50,7 +50,7 @@ export async function POST(
       reasoning: "",
     };
 
-    const reply = await generateReply(
+    const replyResult = await generateReply(
       ticket.subject,
       ticket.body,
       classification,
@@ -59,7 +59,12 @@ export async function POST(
       style
     );
 
-    return NextResponse.json({ reply, knowledgeSnippets, similarTickets });
+    return NextResponse.json({
+      reply: replyResult.reply,
+      citations: replyResult.citations,
+      knowledgeSnippets,
+      similarTickets,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
