@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   TicketStatusBadge,
@@ -18,7 +19,7 @@ interface TicketListProps {
 export function TicketList({ tickets, isLoading }: TicketListProps) {
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-5">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-24 w-full" />
         ))}
@@ -37,9 +38,13 @@ export function TicketList({ tickets, isLoading }: TicketListProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       {tickets.map((ticket) => (
-        <Link key={ticket.id} href={`/tickets/${ticket.id}`}>
+        <Link
+          key={ticket.id}
+          href={`/tickets/${ticket.id}`}
+          className="block"
+        >
           <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
             <CardContent className="p-4">
               <div className="flex flex-col gap-2">
@@ -57,9 +62,12 @@ export function TicketList({ tickets, isLoading }: TicketListProps) {
                   <TicketPriorityBadge priority={ticket.priority} />
 
                   {ticket.ai_confidence && (
-                    <span className="text-xs text-muted-foreground">
+                    <Badge
+                      variant="outline"
+                      className="text-[11px] py-0 px-1.5 border-dotted text-muted-foreground border-muted-foreground/30"
+                    >
                       AI: {(ticket.ai_confidence * 100).toFixed(0)}%
-                    </span>
+                    </Badge>
                   )}
 
                   <span className="text-xs text-muted-foreground ml-auto">

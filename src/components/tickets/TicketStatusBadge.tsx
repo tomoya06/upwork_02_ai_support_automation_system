@@ -12,11 +12,30 @@ const statusStyles: Record<TicketStatus, string> = {
   closed: "bg-gray-100 text-gray-800 hover:bg-gray-100",
 };
 
+// Solid-bordered category badges: each category has its own color.
+const categoryStyles: Record<TicketCategory, string> = {
+  billing:
+    "bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100",
+  technical:
+    "bg-purple-50 text-purple-800 border-purple-300 hover:bg-purple-100",
+  account:
+    "bg-orange-50 text-orange-800 border-orange-300 hover:bg-orange-100",
+  refund:
+    "bg-red-50 text-red-800 border-red-300 hover:bg-red-100",
+  feature_request:
+    "bg-green-50 text-green-800 border-green-300 hover:bg-green-100",
+  general:
+    "bg-gray-50 text-gray-800 border-gray-300 hover:bg-gray-100",
+};
+
+// Dashed-bordered priority badges: visually distinct from categories.
 const priorityStyles: Record<TicketPriority, string> = {
-  low: "bg-slate-100 text-slate-800",
-  medium: "bg-orange-100 text-orange-800",
-  high: "bg-red-100 text-red-800",
-  critical: "bg-purple-100 text-purple-800",
+  low: "bg-slate-50 text-slate-700 border-slate-300 border-dashed",
+  medium:
+    "bg-orange-50 text-orange-700 border-orange-300 border-dashed",
+  high: "bg-red-50 text-red-700 border-red-300 border-dashed",
+  critical:
+    "bg-purple-50 text-purple-700 border-purple-300 border-dashed",
 };
 
 const categoryLabels: Record<TicketCategory, string> = {
@@ -48,15 +67,27 @@ export function TicketStatusBadge({ type, value }: TicketStatusBadgeProps) {
   if (type === "priority") {
     const p = value as TicketPriority;
     return (
-      <Badge variant="outline" className={cn("capitalize text-[11px] py-0 px-1.5", priorityStyles[p])}>
+      <Badge
+        variant="outline"
+        className={cn(
+          "capitalize text-[11px] py-0 px-1.5 border-dashed",
+          priorityStyles[p]
+        )}
+      >
         {p}
       </Badge>
     );
   }
-  // category
+  // category: solid border, category-specific color
   const c = value as TicketCategory;
   return (
-    <Badge variant="outline" className="capitalize text-[11px] py-0 px-1.5">
+    <Badge
+      variant="outline"
+      className={cn(
+        "capitalize text-[11px] py-0 px-1.5",
+        categoryStyles[c]
+      )}
+    >
       {categoryLabels[c] || c}
     </Badge>
   );
