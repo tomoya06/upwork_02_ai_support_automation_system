@@ -3,8 +3,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const supabase = createAdminClient();
 
@@ -50,8 +51,9 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const body = await request.json();
     const supabase = createAdminClient();

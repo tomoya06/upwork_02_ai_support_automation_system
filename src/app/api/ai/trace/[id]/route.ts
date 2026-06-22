@@ -3,8 +3,9 @@ import { getPipelineTrace } from "@/lib/ai/pipeline-service";
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const run = await getPipelineTrace(params.id);
 

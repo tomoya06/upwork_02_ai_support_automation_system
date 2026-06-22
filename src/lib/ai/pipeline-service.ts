@@ -20,19 +20,27 @@ export interface PipelineResult {
   knowledgeSnippets: unknown[];
 }
 
-export async function runPipeline(ticket: Ticket, customer: Customer | null): Promise<PipelineResult> {
+export async function runPipeline(
+  ticket: Ticket,
+  customer: Customer | null,
+  existingRunId?: string
+): Promise<PipelineResult> {
   const supabase = createAdminClient();
   const workspaceId = ticket.workspace_id;
   const ticketId = ticket.id;
 
-  // Create pipeline run record
-  const { data: run } = await supabase
-    .from("pipeline_runs")
-    .insert({ ticket_id: ticketId, status: "running", steps: [] })
-    .select("id")
-    .single();
+  // Create pipeline run record if one wasn't provided by the caller
+  let runId = existingRunId;
+  if (!runId) {
+    const { data: run } = await supabase
+      .from("pipeline_runs")
+      .insert({ ticket_id: ticketId, status: "running", steps: [], started_at: new Date().toISOString() })
+      .select("id")
+      .single();
 
-  const runId = run?.id;
+    runId = run?.id;
+  }
+
   const steps: PipelineStep[] = [];
   let currentStep: PipelineStep["step"] = "execute";
 

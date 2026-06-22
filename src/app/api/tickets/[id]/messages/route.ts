@@ -3,8 +3,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const supabase = createAdminClient();
 
@@ -25,8 +26,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const body = await request.json();
     const { content, role = "agent", metadata } = body;

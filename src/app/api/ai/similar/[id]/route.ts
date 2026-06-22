@@ -4,8 +4,9 @@ import { searchSimilarTickets, generateEmbedding } from "@/lib/ai/embedding-serv
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const supabase = createAdminClient();
 

@@ -5,8 +5,9 @@ import { searchKnowledge, searchSimilarTickets, generateEmbedding } from "@/lib/
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const { style = "full" } = await request.json();
     const supabase = createAdminClient();

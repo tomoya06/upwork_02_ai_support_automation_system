@@ -3,7 +3,7 @@
 import { Brain, Zap, CheckCircle, AlertCircle, Clock } from "lucide-react";
 import type { Ticket } from "@/types";
 import { TicketStatusBadge } from "./TicketStatusBadge";
-import { useRunPipeline } from "@/hooks/useTickets";
+import { useRunPipelineState } from "@/hooks/useTickets";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -52,9 +52,17 @@ function ActionBadge({ action }: { action: string }) {
 }
 
 export function AIInsightPanel({ ticket }: AIInsightPanelProps) {
-  const { mutate: runPipeline, isPending } = useRunPipeline(ticket.id);
+  const {
+    status,
+    isStarting,
+    isRunning,
+    canRun,
+    runPipeline,
+    error,
+  } = useRunPipelineState(ticket.id);
 
   const hasAI = !!ticket.ai_confidence;
+  const isBusy = isStarting || isRunning;
 
   return (
     <div className="rounded-xl border bg-card p-4 space-y-4">
@@ -67,19 +75,39 @@ export function AIInsightPanel({ ticket }: AIInsightPanelProps) {
           size="sm"
           variant="outline"
           onClick={() => runPipeline()}
-          disabled={isPending}
+          disabled={!canRun}
           className="h-7 text-xs gap-1"
         >
-          {isPending ? (
+          {isBusy ? (
             <Clock className="h-3 w-3 animate-spin" />
           ) : (
             <Zap className="h-3 w-3" />
           )}
-          {isPending ? "Running..." : hasAI ? "Re-run AI" : "Run AI"}
+          {isStarting
+            ? "Starting..."
+            : isRunning
+            ? "Running..."
+            : hasAI
+            ? "Re-run AI"
+            : "Run AI"}
         </Button>
       </div>
 
-      {!hasAI ? (
+      {status === "failed" && error && (
+        <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700">
+          <div className="font-medium">AI analysis failed</div>
+          <div className="opacity-80">{error.message}</div>
+        </div>
+      )}
+
+      {isRunning && (
+        <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <Clock className="h-3 w-3 animate-spin" />
+          AI is analyzing this ticket…
+        </div>
+      )}
+
+      {!hasAI && !isBusy && status !== "failed" ? (
         <div className="text-center py-4 text-muted-foreground text-sm">
           <AlertCircle className="h-6 w-6 mx-auto mb-2 opacity-40" />
           <p>No AI analysis yet.</p>
