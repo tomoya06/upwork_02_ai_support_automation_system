@@ -19,6 +19,69 @@ function getGroq(): Groq {
   return _groq;
 }
 
+function extractFirstJSON(content: string): string {
+  const cleaned = content.replace(/```json|```/g, "").trim();
+
+  // Fast path: the whole content is valid JSON.
+  try {
+    JSON.parse(cleaned);
+    return cleaned;
+  } catch {
+    // fall through
+  }
+
+  // Some models append explanatory text after the JSON object.
+  // Scan for the first balanced JSON object/array.
+  const startObj = cleaned.indexOf("{");
+  const startArr = cleaned.indexOf("[");
+  let start = -1;
+  if (startObj === -1) start = startArr;
+  else if (startArr === -1) start = startObj;
+  else start = Math.min(startObj, startArr);
+
+  if (start === -1) {
+    throw new Error("No JSON object or array found in model response");
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let end = -1;
+
+  for (let i = start; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+
+    if (ch === "{" || ch === "[") {
+      depth++;
+    } else if (ch === "}" || ch === "]") {
+      depth--;
+      if (depth === 0) {
+        end = i;
+        break;
+      }
+    }
+  }
+
+  if (end === -1) {
+    throw new Error("Unterminated JSON object/array in model response");
+  }
+
+  return cleaned.slice(start, end + 1);
+}
+
 async function callGroqJSON(system: string, user: string): Promise<unknown> {
   const groq = getGroq();
   const response = await groq.chat.completions.create({
@@ -32,8 +95,7 @@ async function callGroqJSON(system: string, user: string): Promise<unknown> {
   });
 
   const content = response.choices[0]?.message?.content || "";
-  const cleaned = content.replace(/```json|```/g, "").trim();
-  return JSON.parse(cleaned);
+  return JSON.parse(extractFirstJSON(content));
 }
 
 export async function generateText(prompt: string): Promise<string> {
