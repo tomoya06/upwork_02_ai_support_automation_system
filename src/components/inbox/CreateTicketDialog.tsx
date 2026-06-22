@@ -13,26 +13,42 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { useCreateTicket } from "@/hooks/useTickets";
 
-const SUBJECT_OPTIONS = [
-  { value: "Payment failed", label: "Payment failed" },
-  { value: "Refund request", label: "Refund request" },
-  { value: "Cancel subscription", label: "Cancel subscription" },
-  { value: "Upgrade plan", label: "Upgrade plan" },
-  { value: "Reset password", label: "Reset password" },
-  { value: "Change email", label: "Change email" },
-  { value: "Add team member", label: "Add team member" },
-  { value: "Account suspended", label: "Account suspended" },
-  { value: "API access issue", label: "API access issue" },
-  { value: "Data export", label: "Data export" },
-  { value: "Security question", label: "Security question" },
-  { value: "Other", label: "Other" },
+const SUBJECT_GROUPS = [
+  {
+    category: "Billing",
+    options: ["Payment failed", "Refund request", "Cancel subscription"],
+  },
+  {
+    category: "Account",
+    options: [
+      "Account suspended",
+      "Reset password",
+      "Change email",
+      "Add team member",
+      "Data export",
+    ],
+  },
+  {
+    category: "Technical",
+    options: ["API access issue"],
+  },
+  {
+    category: "Feature Request",
+    options: ["Upgrade plan"],
+  },
+  {
+    category: "General",
+    options: ["Security question", "Other"],
+  },
 ];
 
 export function CreateTicketDialog() {
@@ -65,15 +81,24 @@ export function CreateTicketDialog() {
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
             <label className="text-sm font-medium">Subject</label>
-            <Select value={subject} onValueChange={(value) => value && setSubject(value)} required>
+            <Select
+              value={subject}
+              onValueChange={(value) => value && setSubject(value)}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a subject" />
               </SelectTrigger>
               <SelectContent>
-                {SUBJECT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
+                {SUBJECT_GROUPS.map((group) => (
+                  <SelectGroup key={group.category}>
+                    <SelectLabel>{group.category}</SelectLabel>
+                    {group.options.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
