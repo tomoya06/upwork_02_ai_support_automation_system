@@ -151,16 +151,26 @@ export async function generateReply(
   context: string,
   style: "full" | "short" | "detailed" | "next-step" = "full"
 ): Promise<ReplyResult> {
-  const data = await callGroqJSON(
-    "You are a helpful customer support agent. Always return valid JSON.",
-    replyPrompt(
-      subject,
-      body,
-      JSON.stringify(classification),
-      JSON.stringify(decision),
-      context,
-      style
-    )
-  );
-  return parseReply(data);
+  try {
+    const data = await callGroqJSON(
+      "You are a helpful customer support agent. Always return valid JSON.",
+      replyPrompt(
+        subject,
+        body,
+        JSON.stringify(classification),
+        JSON.stringify(decision),
+        context,
+        style
+      )
+    );
+    return parseReply(data);
+  } catch (error) {
+    // LLM sometimes returns malformed JSON. Fall back to a generic draft reply
+    // so the pipeline can still complete and a human agent can refine it.
+    console.error("Failed to generate structured AI reply, using fallback", error);
+    return {
+      reply: "Thank you for reaching out. We're reviewing your request and will respond with a solution shortly.",
+      citations: [],
+    };
+  }
 }
