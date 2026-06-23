@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 interface AIInsightPanelProps {
   ticket: Ticket;
+  isAdmin?: boolean;
 }
 
 function ConfidenceBar({ value }: { value: number }) {
@@ -51,7 +52,7 @@ function ActionBadge({ action }: { action: string }) {
   );
 }
 
-export function AIInsightPanel({ ticket }: AIInsightPanelProps) {
+export function AIInsightPanel({ ticket, isAdmin = false }: AIInsightPanelProps) {
   const {
     status,
     isStarting,
@@ -71,26 +72,28 @@ export function AIInsightPanel({ ticket }: AIInsightPanelProps) {
           <Brain className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold">AI Insights</h3>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => runPipeline()}
-          disabled={!canRun}
-          className="h-7 text-xs gap-1"
-        >
-          {isBusy ? (
-            <Clock className="h-3 w-3 animate-spin" />
-          ) : (
-            <Zap className="h-3 w-3" />
-          )}
-          {isStarting
-            ? "Starting..."
-            : isRunning
-            ? "Running..."
-            : hasAI
-            ? "Re-run AI"
-            : "Run AI"}
-        </Button>
+        {isAdmin && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => runPipeline()}
+            disabled={!canRun}
+            className="h-7 text-xs gap-1"
+          >
+            {isBusy ? (
+              <Clock className="h-3 w-3 animate-spin" />
+            ) : (
+              <Zap className="h-3 w-3" />
+            )}
+            {isStarting
+              ? "Starting..."
+              : isRunning
+              ? "Running..."
+              : hasAI
+              ? "Re-run AI"
+              : "Run AI"}
+          </Button>
+        )}
       </div>
 
       {status === "failed" && error && (
@@ -111,7 +114,9 @@ export function AIInsightPanel({ ticket }: AIInsightPanelProps) {
         <div className="text-center py-4 text-muted-foreground text-sm">
           <AlertCircle className="h-6 w-6 mx-auto mb-2 opacity-40" />
           <p>No AI analysis yet.</p>
-          <p className="text-xs mt-1">Click &quot;Run AI&quot; to analyze this ticket.</p>
+          {isAdmin && (
+            <p className="text-xs mt-1">Click &quot;Run AI&quot; to analyze this ticket.</p>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

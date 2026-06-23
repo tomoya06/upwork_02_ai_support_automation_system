@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSessionFromRequest } from "@/lib/auth/session";
 
 export async function GET(
   _request: NextRequest,
@@ -35,6 +36,25 @@ export async function POST(
 
     if (!content) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });
+    }
+
+    // Read-only mode: allow sending but do not persist to the database.
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json(
+        {
+          message: {
+            id: `preview-${Date.now()}`,
+            ticket_id: params.id,
+            content,
+            role,
+            metadata: metadata || null,
+            created_at: new Date().toISOString(),
+          },
+          preview: true,
+        },
+        { status: 200 }
+      );
     }
 
     const supabase = createAdminClient();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSessionFromRequest } from "@/lib/auth/session";
 
 const WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -34,6 +35,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { subject, body: ticketBody, customer_id, source = "web" } = body;
 

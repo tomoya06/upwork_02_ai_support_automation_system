@@ -30,6 +30,7 @@ yarn-error.log*
 
 # vercel
 .vercel
+.vercel-tmp
 
 # self-test screenshots
 /test-screenshots

@@ -1,16 +1,22 @@
-import { NextResponse, after } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runPipeline, getPipelineTrace } from "@/lib/ai/pipeline-service";
+import { getSessionFromRequest } from "@/lib/auth/session";
 
 const RUN_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
 
   try {
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const supabase = createAdminClient();
 
     const { data: ticket, error: ticketError } = await supabase

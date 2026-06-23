@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateReply } from "@/lib/ai/ai-service";
 import { searchKnowledge, searchSimilarTickets, generateEmbedding } from "@/lib/ai/embedding-service";
+import { getSessionFromRequest } from "@/lib/auth/session";
 
 export async function POST(
   request: NextRequest,
@@ -9,6 +10,11 @@ export async function POST(
 ) {
   const params = await context.params;
   try {
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { style = "full" } = await request.json();
     const supabase = createAdminClient();
 

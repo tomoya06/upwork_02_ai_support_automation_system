@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { ArrowLeft, ChevronDown, MoreHorizontal, Zap } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -19,9 +19,22 @@ import { SimilarTicketsPanel } from "@/components/tickets/SimilarTicketsPanel";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/providers/AuthProvider";
+import type { TicketMessage } from "@/types";
 
 // ─── Right panel tab type ─────────────────────────────────────────────────────
 type RightTab = "ai" | "trace" | "similar";
+
+function createLocalMessage(content: string): TicketMessage {
+  return {
+    id: `local-${Date.now()}`,
+    ticket_id: "",
+    role: "agent",
+    content,
+    metadata: null,
+    created_at: new Date().toISOString(),
+  };
+}
 
 export default function TicketDetailPage() {
   const params = useParams();
@@ -29,16 +42,27 @@ export default function TicketDetailPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [rightTab, setRightTab] = useState<RightTab>("ai");
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [localMessages, setLocalMessages] = useState<TicketMessage[]>([]);
+  const { isAdmin } = useAuth();
 
   const { data: ticket, isLoading: loadingTicket, refetch: refetchTicket } = useTicket(ticketId);
   const { data: messages = [], isLoading: loadingMessages, refetch: refetchMessages } = useTicketMessages(ticketId);
   const { data: pipelineRun } = usePipelineTrace(ticketId);
   const { data: similarTickets = [] } = useSimilarTickets(ticketId);
 
+  const allMessages = useMemo(
+    () => [...messages, ...localMessages],
+    [messages, localMessages]
+  );
+
   // Scroll to bottom when messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [allMessages]);
+
+  function handleLocalSend(content: string) {
+    setLocalMessages((prev) => [...prev, createLocalMessage(content)]);
+  }
 
   if (loadingTicket) {
     return (
@@ -68,11 +92,11 @@ export default function TicketDetailPage() {
   const statusOptions = ["open", "pending", "resolved", "escalated", "closed"] as const;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-0 lg:gap-6 h-full min-h-screen">
+    <div className="flex flex-col lg:flex-row gap-0 lg:gap-6 h-[calc(100vh-6rem)] md:h-[calc(100vh-3rem)] overflow-hidden">
       {/* ─── Left column: main ticket content ─────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 pb-4 border-b">
+        <div className="flex-none flex items-center gap-3 pb-4 border-b">
           <Link
             href="/inbox"
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -98,74 +122,70 @@ export default function TicketDetailPage() {
           </div>
 
           {/* Status quick-change */}
-          <div className="relative flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={() => setShowStatusMenu((p) => !p)}
-            >
-              Status
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-            {showStatusMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-popover border rounded-lg shadow-md overflow-hidden z-20 min-w-[120px]">
-                {statusOptions.map((s) => (
-                  <button
-                    key={s}
-                    className={cn(
-                      "w-full text-left px-3 py-1.5 text-xs hover:bg-muted",
-                      ticket.status === s && "font-semibold text-primary"
-                    )}
-                    onClick={() => {
-                      // patch status
-                      fetch(`/api/tickets/${ticketId}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: s }),
-                      }).then(() => { refetchTicket(); setShowStatusMenu(false); });
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {isAdmin && (
+            <div className="relative flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1"
+                onClick={() => setShowStatusMenu((p) => !p)}
+              >
+                Status
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+              {showStatusMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-popover border rounded-lg shadow-md overflow-hidden z-20 min-w-[120px]">
+                  {statusOptions.map((s) => (
+                    <button
+                      key={s}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs hover:bg-muted",
+                        ticket.status === s && "font-semibold text-primary"
+                      )}
+                      onClick={() => {
+                        fetch(`/api/tickets/${ticketId}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ status: s }),
+                        }).then(() => { refetchTicket(); setShowStatusMenu(false); });
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Original body */}
-        <div className="py-4 border-b">
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-            {ticket.body}
-          </p>
-        </div>
-
         {/* Message thread */}
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto py-4 min-h-0">
           {loadingMessages ? (
             <p className="text-sm text-muted-foreground text-center py-8">Loading messages…</p>
           ) : (
-            <TicketMessageThread messages={messages} />
+            <TicketMessageThread messages={allMessages} />
           )}
           <div ref={bottomRef} />
         </div>
 
         {/* Reply composer */}
-        <div className="pt-4 border-t">
+        <div className="flex-none pt-4 border-t">
           <AIReplyComposer
             ticketId={ticketId}
+            isAdmin={isAdmin}
             onMessageSent={() => refetchMessages()}
+            onLocalSend={handleLocalSend}
           />
         </div>
       </div>
 
       {/* ─── Right column: AI panels (desktop sidebar / mobile tabs) ─── */}
-      <div className="lg:w-80 xl:w-96 flex-shrink-0 mt-6 lg:mt-0">
+      <div className="lg:w-80 xl:w-96 flex-shrink-0 h-full overflow-y-auto mt-6 lg:mt-0">
         {/* Mobile: tab bar at top; Desktop: always visible */}
         <div className="flex border-b mb-4 lg:flex lg:flex-row">
           {rightTabs.map((tab) => (
@@ -191,7 +211,7 @@ export default function TicketDetailPage() {
         </div>
 
         <div className="space-y-4">
-          {rightTab === "ai" && <AIInsightPanel ticket={ticket} />}
+          {rightTab === "ai" && <AIInsightPanel ticket={ticket} isAdmin={isAdmin} />}
 
           {rightTab === "trace" && (
             <div className="rounded-xl border bg-card p-4">

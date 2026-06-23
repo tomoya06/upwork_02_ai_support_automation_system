@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface KnowledgeDocument {
   id: string;
@@ -44,6 +45,7 @@ async function createDocument(payload: { title: string; content: string; source_
 
 export default function KnowledgePage() {
   const queryClient = useQueryClient();
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", content: "", source_url: "" });
   const [formError, setFormError] = useState("");
@@ -90,14 +92,16 @@ export default function KnowledgePage() {
             FAQ documents and product guides for RAG retrieval.
           </p>
         </div>
-        <Button
-          onClick={() => setShowForm((p) => !p)}
-          size="sm"
-          className="gap-1.5 self-start sm:self-auto"
-        >
-          <Plus className="h-4 w-4" />
-          Add Document
-        </Button>
+        {!authLoading && isAdmin && (
+          <Button
+            onClick={() => setShowForm((p) => !p)}
+            size="sm"
+            className="gap-1.5 self-start sm:self-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Add Document
+          </Button>
+        )}
       </div>
 
       {/* Create form */}
