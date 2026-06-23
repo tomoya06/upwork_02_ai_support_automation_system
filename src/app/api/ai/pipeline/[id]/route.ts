@@ -12,7 +12,6 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const isDemoTicket = id.startsWith("tmp_");
 
   try {
     const session = getSessionFromRequest(request);
@@ -48,6 +47,7 @@ export async function POST(
     }
 
     // Demo ticket: limit to 3 successful pipeline runs
+    const isDemoTicket = ticket.expires_at != null;
     if (isDemoTicket) {
       const { count: successRuns } = await supabase
         .from("pipeline_runs")

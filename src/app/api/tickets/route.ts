@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionFromRequest } from "@/lib/auth/session";
 import { getOrCreateAnonymousSession, getAnonymousSession } from "@/lib/auth/anonymous-session";
-import { randomUUID } from "crypto";
 
 const WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 const TEMP_TICKET_TTL_MINUTES = 30;
@@ -89,7 +88,6 @@ export async function POST(request: NextRequest) {
       const response = new NextResponse();
       const anonSessionId = getOrCreateAnonymousSession(request, response);
 
-      insertData.id = `tmp_${randomUUID()}`;
       insertData.expires_at = new Date(
         Date.now() + TEMP_TICKET_TTL_MINUTES * 60 * 1000
       ).toISOString();

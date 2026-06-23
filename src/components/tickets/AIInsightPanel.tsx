@@ -98,7 +98,7 @@ export function AIInsightPanel({ ticket, isAdmin = false }: AIInsightPanelProps)
 
   const hasAI = !!ticket.ai_confidence;
   const isBusy = isStarting || isRunning;
-  const isDemoTicket = ticket.id.startsWith("tmp_");
+  const isDemoTicket = ticket.expires_at != null;
 
   // Count successful runs from pipeline run history
   // We'll use a simple approach: check if the ticket has reached the limit

@@ -83,7 +83,7 @@ export default function TicketDetailPage() {
     );
   }
 
-  const isDemoTicket = ticketId.startsWith("tmp_");
+  const isDemoTicket = ticket.expires_at != null;
 
   const rightTabs: { key: RightTab; label: string }[] = [
     { key: "ai", label: "AI Insights" },

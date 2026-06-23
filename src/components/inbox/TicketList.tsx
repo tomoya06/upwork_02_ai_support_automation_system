@@ -13,7 +13,7 @@ import {
 import type { Ticket } from "@/types";
 
 function isTempTicket(ticket: Ticket): boolean {
-  return ticket.id.startsWith("tmp_");
+  return ticket.expires_at != null;
 }
 
 function ExpiresBadge({ expiresAt }: { expiresAt: string | null }) {
