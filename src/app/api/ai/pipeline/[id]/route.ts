@@ -5,12 +5,14 @@ import { getSessionFromRequest } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const RUN_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const DEMO_TICKET_MAX_RUNS = 3;
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
+  const isDemoTicket = id.startsWith("tmp_");
 
   try {
     const session = getSessionFromRequest(request);
@@ -43,6 +45,22 @@ export async function POST(
 
     if (ticketError || !ticket) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
+
+    // Demo ticket: limit to 3 successful pipeline runs
+    if (isDemoTicket) {
+      const { count: successRuns } = await supabase
+        .from("pipeline_runs")
+        .select("*", { count: "exact", head: true })
+        .eq("ticket_id", id)
+        .eq("status", "completed");
+
+      if ((successRuns ?? 0) >= DEMO_TICKET_MAX_RUNS) {
+        return NextResponse.json(
+          { error: `Demo ticket AI run limit reached (${DEMO_TICKET_MAX_RUNS}/${DEMO_TICKET_MAX_RUNS})` },
+          { status: 403 }
+        );
+      }
     }
 
     // Idempotency: if there is a recent running run, return it instead of creating a new one.

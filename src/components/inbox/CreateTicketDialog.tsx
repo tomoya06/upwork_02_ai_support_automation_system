@@ -19,8 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import { useCreateTicket } from "@/hooks/useTickets";
+
+interface CreateTicketDialogProps {
+  isDemo?: boolean;
+}
 
 const SUBJECT_GROUPS = [
   {
@@ -51,7 +55,7 @@ const SUBJECT_GROUPS = [
   },
 ];
 
-export function CreateTicketDialog() {
+export function CreateTicketDialog({ isDemo = false }: CreateTicketDialogProps) {
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -69,15 +73,22 @@ export function CreateTicketDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button size="sm" className="gap-1">
-            <Plus className="h-4 w-4" /> New Ticket
+          <Button size="sm" className="gap-1" variant={isDemo ? "outline" : "default"}>
+            <Plus className="h-4 w-4" />
+            {isDemo ? "New Demo Ticket" : "New Ticket"}
           </Button>
         }
       />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create New Ticket</DialogTitle>
+          <DialogTitle>{isDemo ? "Create Demo Ticket" : "Create New Ticket"}</DialogTitle>
         </DialogHeader>
+        {isDemo && (
+          <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <p>Demo tickets are temporary and will be deleted after 30 minutes. They are only visible to you.</p>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
             <label className="text-sm font-medium">Subject</label>

@@ -11,40 +11,46 @@ export async function GET() {
     const { count: totalTickets } = await supabase
       .from("tickets")
       .select("*", { count: "exact", head: true })
-      .eq("workspace_id", DEFAULT_WORKSPACE_ID);
+      .eq("workspace_id", DEFAULT_WORKSPACE_ID)
+      .filter("id", "not.like", "tmp_%");
 
     // Open tickets
     const { count: openTickets } = await supabase
       .from("tickets")
       .select("*", { count: "exact", head: true })
       .eq("workspace_id", DEFAULT_WORKSPACE_ID)
-      .eq("status", "open");
+      .eq("status", "open")
+      .filter("id", "not.like", "tmp_%");
 
     // Resolved tickets
     const { count: resolvedTickets } = await supabase
       .from("tickets")
       .select("*", { count: "exact", head: true })
       .eq("workspace_id", DEFAULT_WORKSPACE_ID)
-      .eq("status", "resolved");
+      .eq("status", "resolved")
+      .filter("id", "not.like", "tmp_%");
 
     // Escalated tickets
     const { count: escalatedTickets } = await supabase
       .from("tickets")
       .select("*", { count: "exact", head: true })
       .eq("workspace_id", DEFAULT_WORKSPACE_ID)
-      .eq("status", "escalated");
+      .eq("status", "escalated")
+      .filter("id", "not.like", "tmp_%");
 
     // Tickets with AI analysis
     const { count: aiAnalyzedTickets } = await supabase
       .from("tickets")
       .select("*", { count: "exact", head: true })
       .eq("workspace_id", DEFAULT_WORKSPACE_ID)
-      .not("ai_confidence", "is", null);
+      .not("ai_confidence", "is", null)
+      .filter("id", "not.like", "tmp_%");
 
-    // Pipeline runs
+    // Pipeline runs (exclude those for temp tickets)
     const { count: pipelineRuns } = await supabase
       .from("pipeline_runs")
-      .select("*", { count: "exact", head: true });
+      .select("*", { count: "exact", head: true })
+      .filter("ticket_id", "not.like", "tmp_%");
 
     // Knowledge documents
     const { count: knowledgeDocs } = await supabase
@@ -60,6 +66,7 @@ export async function GET() {
       .select("created_at, status, category, priority")
       .eq("workspace_id", DEFAULT_WORKSPACE_ID)
       .gte("created_at", weekAgo)
+      .filter("id", "not.like", "tmp_%")
       .order("created_at");
 
     // Category breakdown
@@ -67,7 +74,8 @@ export async function GET() {
       .from("tickets")
       .select("category")
       .eq("workspace_id", DEFAULT_WORKSPACE_ID)
-      .not("category", "is", null);
+      .not("category", "is", null)
+      .filter("id", "not.like", "tmp_%");
 
     const categoryCounts: Record<string, number> = {};
     (categoryBreakdown || []).forEach((t) => {

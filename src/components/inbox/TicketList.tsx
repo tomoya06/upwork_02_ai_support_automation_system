@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,37 @@ import {
   TicketCategoryBadge,
 } from "@/components/tickets/TicketStatusBadge";
 import type { Ticket } from "@/types";
+
+function isTempTicket(ticket: Ticket): boolean {
+  return ticket.id.startsWith("tmp_");
+}
+
+function ExpiresBadge({ expiresAt }: { expiresAt: string | null }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000); // Update every 30s
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!expiresAt) return null;
+
+  const expiresMs = new Date(expiresAt).getTime();
+  const remainingMs = expiresMs - now;
+
+  if (remainingMs <= 0) return null;
+
+  const remainingMin = Math.ceil(remainingMs / 60000);
+
+  return (
+    <Badge
+      variant="outline"
+      className="text-[11px] py-0 px-1.5 border-amber-300 text-amber-700 bg-amber-50"
+    >
+      Demo · {remainingMin}min left
+    </Badge>
+  );
+}
 
 interface TicketListProps {
   tickets: Ticket[] | undefined;
@@ -58,6 +90,9 @@ export function TicketList({ tickets, isLoading }: TicketListProps) {
                 </p>
 
                 <div className="flex flex-wrap items-center gap-2 mt-1">
+                  {isTempTicket(ticket) && (
+                    <ExpiresBadge expiresAt={ticket.expires_at ?? null} />
+                  )}
                   <TicketCategoryBadge category={ticket.category} />
                   <TicketPriorityBadge priority={ticket.priority} />
 

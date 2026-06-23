@@ -22,6 +22,8 @@ export interface Ticket {
   ai_confidence: number | null;
   suggested_action: string | null;
   last_ai_run_at: string | null;
+  expires_at: string | null;
+  created_by_session: string | null;
   created_at: string;
   updated_at: string;
 }

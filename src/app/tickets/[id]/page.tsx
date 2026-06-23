@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { ArrowLeft, ChevronDown, MoreHorizontal, Zap } from "lucide-react";
+import { ArrowLeft, ChevronDown, MoreHorizontal, Zap, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -83,6 +83,8 @@ export default function TicketDetailPage() {
     );
   }
 
+  const isDemoTicket = ticketId.startsWith("tmp_");
+
   const rightTabs: { key: RightTab; label: string }[] = [
     { key: "ai", label: "AI Insights" },
     { key: "trace", label: "Pipeline Trace" },
@@ -162,6 +164,19 @@ export default function TicketDetailPage() {
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Demo ticket banner */}
+        {isDemoTicket && (
+          <div className="flex-none flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 mb-4 text-xs text-amber-700">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <p>
+              This is a demo ticket.
+              {ticket.expires_at && (
+                <> It will expire in <strong>{Math.max(0, Math.ceil((new Date(ticket.expires_at).getTime() - Date.now()) / 60000))} minutes</strong>.</>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Message thread */}
         <div className="flex-1 overflow-y-auto py-4 min-h-0">
