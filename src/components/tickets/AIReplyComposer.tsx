@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wand2, Send, Copy, Check, ChevronDown } from "lucide-react";
+import { Wand2, Send, Copy, Check, ChevronDown, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGenerateAIReply, useSendMessage } from "@/hooks/useTickets";
 import { cn } from "@/lib/utils";
@@ -30,14 +30,22 @@ export function AIReplyComposer({
   const [copied, setCopied] = useState(false);
   const [style, setStyle] = useState("full");
   const [showStyleMenu, setShowStyleMenu] = useState(false);
+  const [rateLimitError, setRateLimitError] = useState(false);
 
   const { mutate: generate, isPending: isGenerating } = useGenerateAIReply(ticketId);
   const { mutate: sendMsg, isPending: isSending } = useSendMessage(ticketId);
 
   function handleGenerate() {
+    setRateLimitError(false);
     generate(style, {
       onSuccess: (data) => {
         setDraft(data.reply);
+      },
+      onError: (err: Error & { rateLimited?: boolean }) => {
+        if (err.rateLimited) {
+          setRateLimitError(true);
+          setTimeout(() => setRateLimitError(false), 3000);
+        }
       },
     });
   }
@@ -80,52 +88,58 @@ export function AIReplyComposer({
       <div className="border-t px-3 py-2 flex items-center justify-between gap-2 bg-muted/20">
         {/* AI Generate button with style selector */}
         <div className="flex items-center gap-1">
-          {isAdmin && (
-            <>
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="gap-1.5 h-8 text-xs"
+            >
+              <Wand2 className="h-3.5 w-3.5 text-purple-500" />
+              {isGenerating ? "Generating…" : "Generate AI Reply"}
+            </Button>
+
+            {/* Style picker dropdown */}
+            <div className="relative">
               <Button
                 size="sm"
-                variant="outline"
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="gap-1.5 h-8 text-xs"
+                variant="ghost"
+                onClick={() => setShowStyleMenu((p) => !p)}
+                className="h-8 px-2 text-xs text-muted-foreground gap-0.5"
               >
-                <Wand2 className="h-3.5 w-3.5 text-purple-500" />
-                {isGenerating ? "Generating…" : "Generate AI Reply"}
+                {styleOptions.find((s) => s.value === style)?.label}
+                <ChevronDown className="h-3 w-3" />
               </Button>
+              {showStyleMenu && (
+                <div className="absolute left-0 bottom-full mb-1 bg-popover border rounded-lg shadow-md overflow-hidden z-20 min-w-[120px]">
+                  {styleOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs hover:bg-muted",
+                        style === opt.value && "font-semibold text-primary"
+                      )}
+                      onClick={() => {
+                        setStyle(opt.value);
+                        setShowStyleMenu(false);
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-              {/* Style picker dropdown */}
-              <div className="relative">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowStyleMenu((p) => !p)}
-                  className="h-8 px-2 text-xs text-muted-foreground gap-0.5"
-                >
-                  {styleOptions.find((s) => s.value === style)?.label}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-                {showStyleMenu && (
-                  <div className="absolute left-0 bottom-full mb-1 bg-popover border rounded-lg shadow-md overflow-hidden z-20 min-w-[120px]">
-                    {styleOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        className={cn(
-                          "w-full text-left px-3 py-1.5 text-xs hover:bg-muted",
-                          style === opt.value && "font-semibold text-primary"
-                        )}
-                        onClick={() => {
-                          setStyle(opt.value);
-                          setShowStyleMenu(false);
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+            {/* Rate limit warning */}
+            {rateLimitError && (
+              <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                <AlertCircle className="h-3 w-3" />
+                <span>AI is busy. Please wait a moment.</span>
               </div>
-            </>
-          )}
+            )}
+          </>
         </div>
 
         {/* Send & Copy */}

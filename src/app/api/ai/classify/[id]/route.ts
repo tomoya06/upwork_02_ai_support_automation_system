@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { classifyTicket } from "@/lib/ai/ai-service";
 import { getSessionFromRequest } from "@/lib/auth/session";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(
   request: NextRequest,
@@ -10,8 +11,23 @@ export async function POST(
   const params = await context.params;
   try {
     const session = getSessionFromRequest(request);
+
+    // Anonymous requests are rate-limited
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const rateLimit = await checkRateLimit(request);
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded. Please try again later." },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(rateLimit.retryAfter),
+              "X-RateLimit-Limit": String(rateLimit.limit),
+              "X-RateLimit-Remaining": "0",
+            },
+          }
+        );
+      }
     }
 
     const supabase = createAdminClient();

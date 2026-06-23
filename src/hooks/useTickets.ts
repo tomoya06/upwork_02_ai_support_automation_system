@@ -56,6 +56,12 @@ async function generateAIReply(ticketId: string, style: string = "full"): Promis
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ style }),
   });
+  if (res.status === 429) {
+    const error = new Error("Rate limit exceeded. Please try again later.") as Error & { rateLimited: boolean; retryAfter?: number };
+    error.rateLimited = true;
+    error.retryAfter = Number(res.headers.get("Retry-After")) || 1;
+    throw error;
+  }
   if (!res.ok) throw new Error("Failed to generate AI reply");
   return res.json();
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runPipeline, getPipelineTrace } from "@/lib/ai/pipeline-service";
 import { getSessionFromRequest } from "@/lib/auth/session";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const RUN_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -13,8 +14,23 @@ export async function POST(
 
   try {
     const session = getSessionFromRequest(request);
+
+    // Anonymous requests are rate-limited
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const rateLimit = await checkRateLimit(request);
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded. Please try again later." },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(rateLimit.retryAfter),
+              "X-RateLimit-Limit": String(rateLimit.limit),
+              "X-RateLimit-Remaining": "0",
+            },
+          }
+        );
+      }
     }
 
     const supabase = createAdminClient();
