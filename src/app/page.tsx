@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Bot, ArrowRight } from "lucide-react";
+import { Bot, ArrowRight, Sparkles } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -31,6 +31,12 @@ export default function HomePage() {
           <Link href="/knowledge">
             <Button size="lg" variant="outline">
               Manage Knowledge
+            </Button>
+          </Link>
+          <Link href="/showcase">
+            <Button size="lg" variant="outline" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              View Showcase
             </Button>
           </Link>
         </div>

@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Inbox, BookOpen, BarChart3, Bot } from "lucide-react";
+import { Inbox, BookOpen, BarChart3, Bot, Sparkles } from "lucide-react";
 
 const navItems = [
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/showcase", label: "Showcase", icon: Sparkles },
 ];
 
 export function MobileNav() {
